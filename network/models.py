@@ -11,7 +11,7 @@ class Follow(models.Model):
     following = models.ManyToManyField(User, related_name="followers")
 
 
-class Posts(models.Model):
+class Post(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
     content = models.TextField()
     poster = models.ForeignKey(User, on_delete=models.CASCADE, related_name="posts")
