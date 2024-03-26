@@ -89,7 +89,7 @@ def profile(request, user_name):
 #     pass
 
 
-def pages(request):
+def all_posts(request):
     posts = Post.objects.all()
     posts = posts.order_by("-timestamp").all()
     paginator = Paginator(posts, 10)
