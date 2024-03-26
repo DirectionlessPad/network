@@ -1,10 +1,12 @@
+import json
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
+from django.core.paginator import Paginator
 
-from .models import User
+from .models import User, Post, Follow
 
 
 def index(request):
@@ -63,3 +65,59 @@ def register(request):
         return HttpResponseRedirect(reverse("index"))
     else:
         return render(request, "network/register.html")
+
+
+def create_post(request):
+    print("made it to python")
+    if request.method != "POST":
+        return JsonResponse({"error": "POST request required."}, status=400)
+
+    data = json.loads(request.body)
+    post = Post(
+        content=data.get("body", ""),
+        poster=request.user,
+    )
+    post.save()
+    return JsonResponse({"message": "Post made successfully."}, status=201)
+
+
+def profile(request, user_name):
+    pass
+
+
+# def following(request):
+#     pass
+
+
+def pages(request):
+    posts = Post.objects.all()
+    posts = posts.order_by("-timestamp").all()
+    paginator = Paginator(posts, 10)
+
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    # Return list of posts
+    return JsonResponse(
+        {
+            "num_pages": paginator.num_pages,
+            "posts": [post.serialize() for post in page_obj],
+        }
+    )
+
+
+# def post(request, post_id):
+
+#     # Query for requested email
+#     try:
+#         post = Post.objects.get(pk=post_id)
+#     except Post.DoesNotExist:
+#         return JsonResponse({"error": "Post not found."}, status=404)
+
+#     # Return email contents
+#     if request.method == "GET":
+#         return JsonResponse(post.serialize())
+
+#     # Email must be via GET or PUT
+#     else:
+#         return JsonResponse({"error": "GET or PUT request required."}, status=400)
