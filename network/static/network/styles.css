@@ -1,6 +1,9 @@
-#newpost {
+.container {
     margin: 15px;
     padding: 5px;
+}
+
+#newpost {
     border-style: solid;
     border-color: gray;
     border-radius: 5px;

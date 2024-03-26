@@ -20,3 +20,12 @@ class Post(models.Model):
     def __str__(self):
         """Return poster and timestamp."""
         return f"{self.poster} at {self.timestamp}."
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "poster": self.poster.username,
+            "content": self.content,
+            "liked_by": [user.username for user in self.liked_by.all()],
+            "timestamp": self.timestamp.strftime("%b %d %Y, %I:%M %p"),
+        }

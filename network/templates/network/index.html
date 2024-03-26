@@ -3,7 +3,10 @@
 
 {% block body %}
 <div id="page">
-    <div id="newpost">
+    <div id="profile" class="container">
+        TODO: profiles
+    </div>
+    <div id="newpost" class="container">
         <h3 id="newpost-title">New Post</h3>   
         <form id="newpost-form"  style="display: none;">
             {% csrf_token %}
@@ -11,8 +14,8 @@
             <input type="submit" class="btn btn-primary" />
         </form>
     </div>
-    <div id="listposts">
-        Test
+    <div id="listposts" class="container">
+        TODO: listposts
     </div>
 </div>
 {% endblock %}
