@@ -4,7 +4,7 @@ from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
-from django.core.paginator import Paginator
+from . import paginate
 
 from .models import User, Post, Follow
 
@@ -57,6 +57,8 @@ def register(request):
         try:
             user = User.objects.create_user(username, email, password)
             user.save()
+            user_follow = Follow.objects.create(user=user)
+            user_follow.save()
         except IntegrityError:
             return render(
                 request, "network/register.html", {"message": "Username already taken."}
@@ -82,25 +84,43 @@ def create_post(request):
 
 
 def profile(request, user_name):
+    profile_user = User.objects.get(username=user_name)
+    posts = Post.objects.filter(poster=profile_user)
+    num_followers = len(profile_user.followers.all())
+    num_follows = len(Follow.objects.get(user=profile_user).following.all())
+    # check to see if the user is following the profile
+    currently_following = (
+        Follow.objects.get(user=request.user)
+        .following.filter(username=user_name)
+        .exists()
+    )
+    page_number = request.GET.get("page")
+    page_obj, num_pages = paginate(posts, page_number)
+    return JsonResponse(
+        {
+            "currently_following": currently_following,
+            "num_pages": num_pages,
+            "posts": [post.serialize() for post in page_obj],
+            "profile_name": user_name,
+            "followers": num_followers,
+            "follows": num_follows,
+        }
+    )
+
+
+def following(request):
     pass
-
-
-# def following(request):
-#     pass
 
 
 def all_posts(request):
     posts = Post.objects.all()
-    posts = posts.order_by("-timestamp").all()
-    paginator = Paginator(posts, 10)
-
     page_number = request.GET.get("page")
-    page_obj = paginator.get_page(page_number)
+    page_obj, num_pages = paginate(posts, page_number)
 
     # Return list of posts
     return JsonResponse(
         {
-            "num_pages": paginator.num_pages,
+            "num_pages": num_pages,
             "posts": [post.serialize() for post in page_obj],
         }
     )
