@@ -36,7 +36,6 @@ function newPost() {
                 body: document.querySelector('#newpost-content').value,
             })
         });
-        return false
     }
 }
 
@@ -44,18 +43,21 @@ function showProfile(user) {
     document.querySelector('#newpost').style.display = 'none';
     document.querySelector('#profileinfo').style.display = 'block';
 
+    document.querySelector('#profileinfo').replaceChildren()
     document.querySelector('#listposts').replaceChildren()
     fetch(`/profile/${user}?page=${pageCounter}`)
         .then(response => response.json())
         .then(data => {
             profile_display = document.createElement('div')
-            profile_display.innerHTML = `${data.profile_name}    Followers: ${data.followers}  Following: ${data.follows}`
+            profile_display.innerHTML = `${data.profile_name}    Followers: ${data.followers}  Following: ${data.follows}   `
+
             if (user != document.querySelector('#profile').dataset.user.toString()) {
-                follow_button = document.createElement('button')
+                followButton = document.createElement('button')
+                profile_display.appendChild(followButton)
                 if (data.currently_following) {
-                    follow_button.innerHTML = "Unfollow"
+                    followButton.classList.add('unfollow')
                 } else {
-                    follow_button.innerHTML = "Follow"
+                    followButton.innerHTML = "Follow"
                 }
             }
             document.querySelector('#profileinfo').append(profile_display);
@@ -82,12 +84,38 @@ function loadAllPosts() {
 
 };
 
-function addPost(contents) {
+function addPost(postinfo) {
 
     // Create new post
+    console.log(postinfo)
     const post = document.createElement('div');
     post.className = 'post';
-    post.innerHTML = contents;
+    const poster = document.createElement('h3');
+    poster.classList.add('link-behaviour')
+    poster.innerHTML = postinfo.poster;
+    poster.addEventListener('click', () => {
+        resetPageCounter()
+        username = postinfo.poster
+        showProfile(profile = username)
+    })
+    const content = document.createElement('div');
+    content.innerHTML = postinfo.content;
+    const lastRow = document.createElement('div');
+    lastRow.classList.add('row');
+    const timestamp = document.createElement('div');
+    timestamp.classList.add('col-6');
+    timestamp.innerHTML = postinfo.timestamp
+    const likeDiv = document.createElement('div');
+    likeDiv.classList.add('col-6');
+    const likeButton = document.createElement('button');
+    likeDiv.appendChild(likeButton);
+    likeButton.style.textAlign = "right";
+    likeButton.innerHTML = "Like"
+    lastRow.appendChild(timestamp);
+    lastRow.appendChild(likeButton);
+    post.appendChild(poster)
+    post.appendChild(content)
+    post.appendChild(lastRow)
 
     // Add post to DOM
     document.querySelector('#listposts').append(post);
