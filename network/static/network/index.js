@@ -109,10 +109,10 @@ function addPost(postinfo) {
     likeDiv.classList.add('col-6');
     const likeButton = document.createElement('button');
     likeDiv.appendChild(likeButton);
-    likeButton.style.textAlign = "right";
+    likeDiv.style.textAlign = "right"
     likeButton.innerHTML = "Like"
     lastRow.appendChild(timestamp);
-    lastRow.appendChild(likeButton);
+    lastRow.appendChild(likeDiv);
     post.appendChild(poster)
     post.appendChild(content)
     post.appendChild(lastRow)
@@ -127,23 +127,40 @@ function resetPageCounter() {
 
 function paginate(numPages, loadFunction) {
     if (numPages > 1) {
-        const pageButtons = document.createElement('div')
+        const pageNav = document.createElement('nav')
+        pageNav.ariaLabel = "Page Navigation"
+        const pageButtons = document.createElement('ul')
+        pageButtons.classList.add("pagination")
+        pageButtons.classList.add("justify-content-center")
         if (pageCounter > 1) {
-            prevButton = document.createElement('button')
-            prevButton.innerHTML = "Previous"
+            prevButton = document.createElement('li')
+            prevButton.classList.add("page-item")
+            prevButton.innerHTML = '<a class="page-link" href="#">Previous</a>'
             pageButtons.appendChild(prevButton)
             prevButton.addEventListener("click", () => {
                 pageCounter--;
-                loadFunction(page);
+                loadFunction();
             })
         };
+        for (let i = 0; i < numPages; i++) {
+            const pageNumber = i + 1
+            const pageNumberButton = document.createElement('li');
+            pageNumberButton.innerHTML = `<a class="page-link" href="#">${pageNumber}</a>`;
+            pageNumberButton.classList.add("page-item")
+            pageButtons.appendChild(pageNumberButton);
+            pageNumberButton.addEventListener("click", () => {
+                pageCounter = pageNumber
+                loadFunction()
+            })
+        }
         if (pageCounter < numPages) {
-            nextButton = document.createElement('button')
-            nextButton.innerHTML = "Next"
-            pageButtons.appendChild(nextButton)
+            nextButton = document.createElement('li');
+            nextButton.innerHTML = '<a class="page-link" href="#">Next</a>';
+            nextButton.classList.add("page-item")
+            pageButtons.appendChild(nextButton);
             nextButton.addEventListener("click", () => {
                 pageCounter++;
-                loadFunction(page);
+                loadFunction();
             })
         };
         document.querySelector('#listposts').appendChild(pageButtons)

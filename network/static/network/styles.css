@@ -3,6 +3,13 @@
     padding: 5px;
 }
 
+.post {
+    margin: 5px;
+    border-style: solid;
+    border-color: gray;
+    border-radius: 5px;
+}
+
 #newpost {
     border-style: solid;
     border-color: gray;
