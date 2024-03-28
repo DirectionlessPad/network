@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", function () {
     })
     document.querySelector('#following').addEventListener('click', () => {
         resetPageCounter()
-        // loadPosts(page = "following", resetPageCounter = true)
+        loadFollowedPosts()
     })
     document.querySelector('#home-button').addEventListener('click', () => {
         resetPageCounter()
@@ -17,7 +17,6 @@ document.addEventListener("DOMContentLoaded", function () {
     document.querySelector('#newpost-title').addEventListener('click', () => {
         document.querySelector('#newpost-form').style.display = 'block'
     });
-    newPost();
     loadAllPosts();
 });
 
@@ -39,12 +38,28 @@ function newPost() {
     }
 }
 
+function loadFollowedPosts() {
+    document.querySelector('#newpost').style.display = 'none';
+    document.querySelector('#profileinfo').style.display = 'none';
+    document.querySelector('#listposts').replaceChildren();
+
+    fetch(`/following?page=${pageCounter}`)
+        .then(response => response.json())
+        .then(data => {
+            data.posts.forEach(
+                addPost
+            );
+            paginate(data.num_pages, loadFollowedPosts)
+        })
+
+}
+
 function showProfile(user) {
     document.querySelector('#newpost').style.display = 'none';
     document.querySelector('#profileinfo').style.display = 'block';
 
-    document.querySelector('#profileinfo').replaceChildren()
-    document.querySelector('#listposts').replaceChildren()
+    document.querySelector('#profileinfo').replaceChildren();
+    document.querySelector('#listposts').replaceChildren();
     fetch(`/profile/${user}?page=${pageCounter}`)
         .then(response => response.json())
         .then(data => {
@@ -70,13 +85,13 @@ function showProfile(user) {
 }
 
 function loadAllPosts() {
+    document.querySelector('#profileinfo').style.display = 'none';
     newPost();
     document.querySelector('#listposts').replaceChildren()
     fetch(`/all_posts?page=${pageCounter}`)
         .then(response => response.json())
         .then(data => {
             data.posts.forEach(
-                // Need to actually add HTML to display the post
                 addPost
             );
             paginate(data.num_pages, loadAllPosts)
@@ -87,7 +102,6 @@ function loadAllPosts() {
 function addPost(postinfo) {
 
     // Create new post
-    console.log(postinfo)
     const post = document.createElement('div');
     post.className = 'post';
     const poster = document.createElement('h3');

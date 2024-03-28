@@ -109,7 +109,17 @@ def profile(request, user_name):
 
 
 def following(request):
-    pass
+    # Get all the users this user follows
+    follows = Follow.objects.get(user=request.user).following.all()
+    posts = Post.objects.filter(poster__in=follows)
+    page_number = request.GET.get("page")
+    page_obj, num_pages = paginate(posts, page_number)
+    return JsonResponse(
+        {
+            "num_pages": num_pages,
+            "posts": [post.serialize() for post in page_obj],
+        }
+    )
 
 
 def all_posts(request):
