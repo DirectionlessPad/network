@@ -3,12 +3,32 @@
     padding: 5px;
 }
 
+.post {
+    margin: 5px;
+    border-style: solid;
+    border-color: gray;
+    border-radius: 5px;
+}
+
 #newpost {
     border-style: solid;
     border-color: gray;
     border-radius: 5px;
 }
 
-#newpost-title:hover {
+.link-behaviour:hover {
     cursor: pointer;
+    color: blue;
+}
+
+.unfollow {
+    background-color: aqua;
+}
+
+.unfollow:after {
+    content: 'Following';
+}
+
+.unfollow:hover:after {
+    content: 'Unfollow';
 }

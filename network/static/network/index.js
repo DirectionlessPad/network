@@ -1,19 +1,30 @@
 let pageCounter = 1;
 
 document.addEventListener("DOMContentLoaded", function () {
-    document.querySelector('#profile').addEventListener('click', () => loadPosts("profile"))
-    document.querySelector('#following').addEventListener('click', () => loadPosts("following"))
-    document.querySelector('#home-button').addEventListener('click', () => loadPosts("all_posts"))
+    document.querySelector('#profile').addEventListener('click', () => {
+        resetPageCounter()
+        username = document.querySelector('#profile').dataset.user.toString()
+        showProfile(profile = username)
+    })
+    document.querySelector('#following').addEventListener('click', () => {
+        resetPageCounter()
+        // loadPosts(page = "following", resetPageCounter = true)
+    })
+    document.querySelector('#home-button').addEventListener('click', () => {
+        resetPageCounter()
+        loadAllPosts()
+    })
     document.querySelector('#newpost-title').addEventListener('click', () => {
         document.querySelector('#newpost-form').style.display = 'block'
     });
     newPost();
-    loadPosts("all_posts");
+    loadAllPosts();
 });
 
 function newPost() {
     var csrfToken = document.querySelector('meta[name="csrf-token"]').content;
-    document.querySelector('#newpost').style.display = 'block'
+    document.querySelector('#newpost').style.display = 'block';
+    document.querySelector('#profileinfo').style.display = 'none';
     document.querySelector('form').onsubmit = () => {
         fetch('/create_post', {
             method: 'POST',
@@ -25,16 +36,41 @@ function newPost() {
                 body: document.querySelector('#newpost-content').value,
             })
         });
-        return false
     }
 }
 
-function loadPosts(page) {
-    if (page === "all_posts") {
-        newPost();
-    } else {
-        document.querySelector('#newpost').style.display = 'none'
-    }
+function showProfile(user) {
+    document.querySelector('#newpost').style.display = 'none';
+    document.querySelector('#profileinfo').style.display = 'block';
+
+    document.querySelector('#profileinfo').replaceChildren()
+    document.querySelector('#listposts').replaceChildren()
+    fetch(`/profile/${user}?page=${pageCounter}`)
+        .then(response => response.json())
+        .then(data => {
+            profile_display = document.createElement('div')
+            profile_display.innerHTML = `${data.profile_name}    Followers: ${data.followers}  Following: ${data.follows}   `
+
+            if (user != document.querySelector('#profile').dataset.user.toString()) {
+                followButton = document.createElement('button')
+                profile_display.appendChild(followButton)
+                if (data.currently_following) {
+                    followButton.classList.add('unfollow')
+                } else {
+                    followButton.innerHTML = "Follow"
+                }
+            }
+            document.querySelector('#profileinfo').append(profile_display);
+
+            data.posts.forEach(
+                addPost
+            );
+            paginate(data.num_pages, function () { showProfile(user) })
+        });
+}
+
+function loadAllPosts() {
+    newPost();
     document.querySelector('#listposts').replaceChildren()
     fetch(`/all_posts?page=${pageCounter}`)
         .then(response => response.json())
@@ -43,39 +79,90 @@ function loadPosts(page) {
                 // Need to actually add HTML to display the post
                 addPost
             );
-            if (data.num_pages > 1) {
-                const pageButtons = document.createElement('div')
-                if (pageCounter > 1) {
-                    prevButton = document.createElement('button')
-                    prevButton.innerHTML = "Previous"
-                    pageButtons.appendChild(prevButton)
-                    prevButton.addEventListener("click", () => {
-                        pageCounter--;
-                        loadPosts();
-                    })
-                };
-                if (pageCounter < data.num_pages) {
-                    nextButton = document.createElement('button')
-                    nextButton.innerHTML = "Next"
-                    pageButtons.appendChild(nextButton)
-                    nextButton.addEventListener("click", () => {
-                        pageCounter++;
-                        loadPosts();
-                    })
-                };
-                document.querySelector('#listposts').appendChild(pageButtons)
-            };
+            paginate(data.num_pages, loadAllPosts)
         });
 
 };
 
-function addPost(contents) {
+function addPost(postinfo) {
 
     // Create new post
+    console.log(postinfo)
     const post = document.createElement('div');
     post.className = 'post';
-    post.innerHTML = contents;
+    const poster = document.createElement('h3');
+    poster.classList.add('link-behaviour')
+    poster.innerHTML = postinfo.poster;
+    poster.addEventListener('click', () => {
+        resetPageCounter()
+        username = postinfo.poster
+        showProfile(profile = username)
+    })
+    const content = document.createElement('div');
+    content.innerHTML = postinfo.content;
+    const lastRow = document.createElement('div');
+    lastRow.classList.add('row');
+    const timestamp = document.createElement('div');
+    timestamp.classList.add('col-6');
+    timestamp.innerHTML = postinfo.timestamp
+    const likeDiv = document.createElement('div');
+    likeDiv.classList.add('col-6');
+    const likeButton = document.createElement('button');
+    likeDiv.appendChild(likeButton);
+    likeDiv.style.textAlign = "right"
+    likeButton.innerHTML = "Like"
+    lastRow.appendChild(timestamp);
+    lastRow.appendChild(likeDiv);
+    post.appendChild(poster)
+    post.appendChild(content)
+    post.appendChild(lastRow)
 
     // Add post to DOM
     document.querySelector('#listposts').append(post);
 };
+
+function resetPageCounter() {
+    pageCounter = 1;
+}
+
+function paginate(numPages, loadFunction) {
+    if (numPages > 1) {
+        const pageNav = document.createElement('nav')
+        pageNav.ariaLabel = "Page Navigation"
+        const pageButtons = document.createElement('ul')
+        pageButtons.classList.add("pagination")
+        pageButtons.classList.add("justify-content-center")
+        if (pageCounter > 1) {
+            prevButton = document.createElement('li')
+            prevButton.classList.add("page-item")
+            prevButton.innerHTML = '<a class="page-link" href="#">Previous</a>'
+            pageButtons.appendChild(prevButton)
+            prevButton.addEventListener("click", () => {
+                pageCounter--;
+                loadFunction();
+            })
+        };
+        for (let i = 0; i < numPages; i++) {
+            const pageNumber = i + 1
+            const pageNumberButton = document.createElement('li');
+            pageNumberButton.innerHTML = `<a class="page-link" href="#">${pageNumber}</a>`;
+            pageNumberButton.classList.add("page-item")
+            pageButtons.appendChild(pageNumberButton);
+            pageNumberButton.addEventListener("click", () => {
+                pageCounter = pageNumber
+                loadFunction()
+            })
+        }
+        if (pageCounter < numPages) {
+            nextButton = document.createElement('li');
+            nextButton.innerHTML = '<a class="page-link" href="#">Next</a>';
+            nextButton.classList.add("page-item")
+            pageButtons.appendChild(nextButton);
+            nextButton.addEventListener("click", () => {
+                pageCounter++;
+                loadFunction();
+            })
+        };
+        document.querySelector('#listposts').appendChild(pageButtons)
+    };
+}

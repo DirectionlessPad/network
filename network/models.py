@@ -8,7 +8,8 @@ class User(AbstractUser):
 
 
 class Follow(models.Model):
-    following = models.ManyToManyField(User, related_name="followers")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="following")
+    following = models.ManyToManyField(User, blank=True, related_name="followers")
 
 
 class Post(models.Model):
