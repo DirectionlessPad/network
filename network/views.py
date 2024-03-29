@@ -5,6 +5,7 @@ from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 from . import paginate
+from time import sleep
 
 from .models import User, Post, Follow
 
@@ -86,6 +87,7 @@ def create_post(request):
 def profile(request, user_name):
     profile_user = User.objects.get(username=user_name)
     posts = Post.objects.filter(poster=profile_user)
+    sleep(0.01)
     num_followers = len(profile_user.followers.all())
     num_follows = len(Follow.objects.get(user=profile_user).following.all())
     # check to see if the user is following the profile
@@ -109,7 +111,17 @@ def profile(request, user_name):
 
 
 def following(request):
-    pass
+    # Get all the users this user follows
+    follows = Follow.objects.get(user=request.user).following.all()
+    posts = Post.objects.filter(poster__in=follows)
+    page_number = request.GET.get("page")
+    page_obj, num_pages = paginate(posts, page_number)
+    return JsonResponse(
+        {
+            "num_pages": num_pages,
+            "posts": [post.serialize() for post in page_obj],
+        }
+    )
 
 
 def all_posts(request):
@@ -124,6 +136,18 @@ def all_posts(request):
             "posts": [post.serialize() for post in page_obj],
         }
     )
+
+
+def follow(request, user_name):
+    follow = Follow.objects.get(user=request.user)
+    user_to_follow = User.objects.get(username=user_name)
+    if request.method == "POST":
+        data = json.loads(request.body)
+        if data.get("follow"):
+            follow.following.add(user_to_follow)
+        else:
+            follow.following.remove(user_to_follow)
+        return HttpResponse(status=204)
 
 
 # def post(request, post_id):
