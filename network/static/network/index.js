@@ -24,7 +24,7 @@ function newPost() {
     var csrfToken = document.querySelector('meta[name="csrf-token"]').content;
     document.querySelector('#newpost').style.display = 'block';
     document.querySelector('#profileinfo').style.display = 'none';
-    document.querySelector('form').onsubmit = () => {
+    document.querySelector('#newpost-form').onsubmit = () => {
         fetch('/create_post', {
             method: 'POST',
             headers: {
@@ -114,34 +114,67 @@ function loadAllPosts() {
 };
 
 function addPost(postinfo) {
-
     // Create new post
-    const post = document.createElement('div');
-    post.className = 'post';
-    const poster = document.createElement('h3');
-    poster.classList.add('link-behaviour')
+    const post = createCustomElement('div', 'post');
+    const firstRow = createCustomElement('div', 'row');
+    const poster = createCustomElement('h3', ['col-6', 'link-behaviour']);
     poster.innerHTML = postinfo.poster;
     poster.addEventListener('click', () => {
         resetPageCounter()
         username = postinfo.poster
         showProfile(profile = username)
     })
+    firstRow.appendChild(poster);
     const content = document.createElement('div');
     content.innerHTML = postinfo.content;
-    const lastRow = document.createElement('div');
-    lastRow.classList.add('row');
-    const timestamp = document.createElement('div');
-    timestamp.classList.add('col-6');
+    if (postinfo.poster === document.querySelector('#profile').dataset.user.toString()) {
+        const editDiv = createCustomElement('div', 'col-6');
+        editDiv.style.textAlign = "right";
+        const editButton = document.createElement('button');
+        editButton.innerHTML = "Edit"
+        editDiv.appendChild(editButton);
+        firstRow.appendChild(editDiv);
+        editButton.addEventListener("click", () => {
+            content.innerHTML = "";
+            const editPostForm = document.createElement('form');
+            editPostForm.id = "editpost-form";
+            const editPostBody = createCustomElement('textarea', 'form-control');
+            editPostBody.innerHTML = postinfo.content;
+            editPostForm.appendChild(editPostBody);
+            const editPostSubmit = createCustomElement('input', ['btn', 'btn-primary'])
+            editPostSubmit.type = "submit";
+            editPostForm.appendChild(editPostSubmit);
+            content.appendChild(editPostForm);
+            editPostForm.onsubmit = () => {
+                event.preventDefault()
+                editedBody = editPostBody.value;
+                var csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+                fetch(`/post/${postinfo.id}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        body: editedBody,
+                    })
+                })
+                content.replaceChildren();
+                content.innerHTML = editedBody;
+            }
+        })
+    }
+    const lastRow = createCustomElement('div', 'row');
+    const timestamp = createCustomElement('div', 'col-6');
     timestamp.innerHTML = postinfo.timestamp
-    const likeDiv = document.createElement('div');
-    likeDiv.classList.add('col-6');
+    const likeDiv = createCustomElement('div', 'col-6');
     const likeButton = document.createElement('button');
     likeDiv.appendChild(likeButton);
-    likeDiv.style.textAlign = "right"
-    likeButton.innerHTML = "Like"
+    likeDiv.style.textAlign = "right";
+    likeButton.innerHTML = "Like";
     lastRow.appendChild(timestamp);
     lastRow.appendChild(likeDiv);
-    post.appendChild(poster)
+    post.appendChild(firstRow)
     post.appendChild(content)
     post.appendChild(lastRow)
 
@@ -157,12 +190,9 @@ function paginate(numPages, loadFunction) {
     if (numPages > 1) {
         const pageNav = document.createElement('nav')
         pageNav.ariaLabel = "Page Navigation"
-        const pageButtons = document.createElement('ul')
-        pageButtons.classList.add("pagination")
-        pageButtons.classList.add("justify-content-center")
+        const pageButtons = createCustomElement('ul', ['pagination', 'justify-content-center'])
         if (pageCounter > 1) {
-            prevButton = document.createElement('li')
-            prevButton.classList.add("page-item")
+            prevButton = createCustomElement('li', 'page-item')
             prevButton.innerHTML = '<a class="page-link" href="#">Previous</a>'
             pageButtons.appendChild(prevButton)
             prevButton.addEventListener("click", () => {
@@ -172,9 +202,8 @@ function paginate(numPages, loadFunction) {
         };
         for (let i = 0; i < numPages; i++) {
             const pageNumber = i + 1
-            const pageNumberButton = document.createElement('li');
+            const pageNumberButton = createCustomElement('li', 'page-item');
             pageNumberButton.innerHTML = `<a class="page-link" href="#">${pageNumber}</a>`;
-            pageNumberButton.classList.add("page-item")
             pageButtons.appendChild(pageNumberButton);
             pageNumberButton.addEventListener("click", () => {
                 pageCounter = pageNumber
@@ -182,9 +211,8 @@ function paginate(numPages, loadFunction) {
             })
         }
         if (pageCounter < numPages) {
-            nextButton = document.createElement('li');
+            nextButton = createCustomElement('li', 'page-item');
             nextButton.innerHTML = '<a class="page-link" href="#">Next</a>';
-            nextButton.classList.add("page-item")
             pageButtons.appendChild(nextButton);
             nextButton.addEventListener("click", () => {
                 pageCounter++;
@@ -193,4 +221,15 @@ function paginate(numPages, loadFunction) {
         };
         document.querySelector('#listposts').appendChild(pageButtons)
     };
+}
+
+function createCustomElement(tag, classes) {
+    classes = [].concat(classes)
+    element = document.createElement(tag)
+    if (classes) {
+        classes.forEach((htmlclass) => {
+            element.classList.add(htmlclass)
+        })
+    }
+    return element
 }

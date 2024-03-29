@@ -150,18 +150,24 @@ def follow(request, user_name):
         return HttpResponse(status=204)
 
 
-# def post(request, post_id):
+def post(request, post_id):
+    print("visited")
+    if request.method == "POST":
+        # Query for requested email
+        data = json.loads(request.body)
+        try:
+            post = Post.objects.get(pk=post_id)
+        except Post.DoesNotExist:
+            return JsonResponse({"error": "Post not found."}, status=404)
 
-#     # Query for requested email
-#     try:
-#         post = Post.objects.get(pk=post_id)
-#     except Post.DoesNotExist:
-#         return JsonResponse({"error": "Post not found."}, status=404)
+        post.content = data.get("body", "")
+        post.save()
+        return HttpResponse(status=204)
 
-#     # Return email contents
-#     if request.method == "GET":
-#         return JsonResponse(post.serialize())
+    # # Return email contents
+    # if request.method == "GET":
+    #     return JsonResponse(post.serialize())
 
-#     # Email must be via GET or PUT
-#     else:
-#         return JsonResponse({"error": "GET or PUT request required."}, status=400)
+    # # Email must be via GET or PUT
+    # else:
+    #     return JsonResponse({"error": "GET or PUT request required."}, status=400)
