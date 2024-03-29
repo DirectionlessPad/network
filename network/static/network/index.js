@@ -42,7 +42,6 @@ function loadFollowedPosts() {
     document.querySelector('#newpost').style.display = 'none';
     document.querySelector('#profileinfo').style.display = 'none';
     document.querySelector('#listposts').replaceChildren();
-
     fetch(`/following?page=${pageCounter}`)
         .then(response => response.json())
         .then(data => {
@@ -63,6 +62,7 @@ function showProfile(user) {
     fetch(`/profile/${user}?page=${pageCounter}`)
         .then(response => response.json())
         .then(data => {
+
             profile_display = document.createElement('div')
             profile_display.innerHTML = `${data.profile_name}    Followers: ${data.followers}  Following: ${data.follows}   `
 
@@ -74,6 +74,20 @@ function showProfile(user) {
                 } else {
                     followButton.innerHTML = "Follow"
                 }
+                followButton.addEventListener("click", () => {
+                    var csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+                    fetch(`/follow/${user}`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': csrfToken,
+                        },
+                        credentials: 'same-origin',
+                        body: JSON.stringify({
+                            follow: !data.currently_following
+                        })
+                    })
+                    showProfile(user)
+                })
             }
             document.querySelector('#profileinfo').append(profile_display);
 
