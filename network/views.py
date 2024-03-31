@@ -151,23 +151,32 @@ def follow(request, user_name):
 
 
 def post(request, post_id):
-    print("visited")
+    data = json.loads(request.body)
+    try:
+        post = Post.objects.get(pk=post_id)
+    except Post.DoesNotExist:
+        return JsonResponse({"error": "Post not found."}, status=404)
     if request.method == "POST":
         # Query for requested email
-        data = json.loads(request.body)
-        try:
-            post = Post.objects.get(pk=post_id)
-        except Post.DoesNotExist:
-            return JsonResponse({"error": "Post not found."}, status=404)
 
         post.content = data.get("body", "")
         post.save()
         return HttpResponse(status=204)
 
-    # # Return email contents
-    # if request.method == "GET":
-    #     return JsonResponse(post.serialize())
-
-    # # Email must be via GET or PUT
-    # else:
-    #     return JsonResponse({"error": "GET or PUT request required."}, status=400)
+    elif request.method == "PUT":
+        post.liked_by
+        if request.user in post.liked_by.all():
+            post.liked_by.remove(request.user)
+        else:
+            post.liked_by.add(request.user)
+        # if data.get("liked") is not None:
+        #     if data.get("liked"):
+        #         post.liked_by.remove(request.user)
+        #     else:
+        #         post.liked_by.add(request.user)
+        # return HttpResponse(status=204)
+        # breakpoint()
+        return JsonResponse(
+            post.serialize(),
+            # status=204,
+        )

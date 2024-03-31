@@ -1,9 +1,10 @@
 let pageCounter = 1;
 
+
 document.addEventListener("DOMContentLoaded", function () {
     document.querySelector('#profile').addEventListener('click', () => {
         resetPageCounter()
-        username = document.querySelector('#profile').dataset.user.toString()
+        let username = document.querySelector('#profile').dataset.user.toString()
         showProfile(profile = username)
     })
     document.querySelector('#following').addEventListener('click', () => {
@@ -67,7 +68,7 @@ function showProfile(user) {
             profile_display.innerHTML = `${data.profile_name}    Followers: ${data.followers}  Following: ${data.follows}   `
 
             if (user != document.querySelector('#profile').dataset.user.toString()) {
-                createFollowButton(profile_display, data)
+                createFollowButton(user, profile_display, data)
             }
             document.querySelector('#profileinfo').append(profile_display);
 
@@ -101,23 +102,19 @@ function addPost(postinfo) {
     poster.innerHTML = postinfo.poster;
     poster.addEventListener('click', () => {
         resetPageCounter()
-        username = postinfo.poster
-        showProfile(profile = username)
+        showProfile(profile = postinfo.poster)
     })
     firstRow.appendChild(poster);
     const content = document.createElement('div');
     content.innerHTML = postinfo.content;
     if (postinfo.poster === document.querySelector('#profile').dataset.user.toString()) {
-        createEditButton(firstRow, content, postinfo)
+        editDiv = createEditButton(content, postinfo)
+        firstRow.appendChild(editDiv);
     }
     const lastRow = createCustomElement('div', 'row');
     const timestamp = createCustomElement('div', 'col-6');
     timestamp.innerHTML = postinfo.timestamp
-    const likeDiv = createCustomElement('div', 'col-6');
-    const likeButton = document.createElement('button');
-    likeDiv.appendChild(likeButton);
-    likeDiv.style.textAlign = "right";
-    likeButton.innerHTML = "Like";
+    const likeDiv = createLikeButton(postinfo)
     lastRow.appendChild(timestamp);
     lastRow.appendChild(likeDiv);
     post.appendChild(firstRow)
@@ -180,7 +177,7 @@ function createCustomElement(tag, classes) {
     return element
 }
 
-function createFollowButton(profile_display, data) {
+function createFollowButton(user, profile_display, data) {
     const followButton = document.createElement('button')
     profile_display.appendChild(followButton)
     if (data.currently_following) {
@@ -204,13 +201,12 @@ function createFollowButton(profile_display, data) {
     })
 }
 
-function createEditButton(firstRow, content, postinfo) {
+function createEditButton(content, postinfo) {
     const editDiv = createCustomElement('div', 'col-6');
     editDiv.style.textAlign = "right";
     const editButton = document.createElement('button');
     editButton.innerHTML = "Edit"
     editDiv.appendChild(editButton);
-    firstRow.appendChild(editDiv);
     editButton.addEventListener("click", () => {
         content.innerHTML = "";
         const editPostForm = document.createElement('form');
@@ -240,4 +236,41 @@ function createEditButton(firstRow, content, postinfo) {
             content.innerHTML = editedBody;
         }
     })
+    return editDiv
+}
+
+function createLikeButton(postinfo) {
+    const likeDiv = createCustomElement('span', 'col-6');
+    const likeButton = document.createElement('button');
+    likeDiv.appendChild(likeButton);
+    likeDiv.style.textAlign = "right";
+    let liked = postinfo.liked_by.includes(document.querySelector('#profile').dataset.user.toString())
+    likeButton.addEventListener("click", () => {
+        var csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+        fetch(`/post/${postinfo.id}`, {
+            method: 'PUT',
+            headers: {
+                'X-CSRFToken': csrfToken,
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                liked: liked,
+            })
+        })
+            .then(response => response.json())
+            .then(newpostinfo => {
+                likeButtonContent(newpostinfo, likeButton)
+            })
+    })
+    likeButtonContent(postinfo, likeButton)
+    return likeDiv
+}
+
+function likeButtonContent(postinfo, likeButton) {
+    let liked = postinfo.liked_by.includes(document.querySelector('#profile').dataset.user.toString())
+    if (liked) {
+        likeButton.innerHTML = `Unlike: ${postinfo.liked_by.length}`;
+    } else {
+        likeButton.innerHTML = `Like: ${postinfo.liked_by.length}`;
+    }
 }
