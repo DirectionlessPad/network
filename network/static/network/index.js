@@ -67,27 +67,7 @@ function showProfile(user) {
             profile_display.innerHTML = `${data.profile_name}    Followers: ${data.followers}  Following: ${data.follows}   `
 
             if (user != document.querySelector('#profile').dataset.user.toString()) {
-                followButton = document.createElement('button')
-                profile_display.appendChild(followButton)
-                if (data.currently_following) {
-                    followButton.classList.add('unfollow')
-                } else {
-                    followButton.innerHTML = "Follow"
-                }
-                followButton.addEventListener("click", () => {
-                    var csrfToken = document.querySelector('meta[name="csrf-token"]').content;
-                    fetch(`/follow/${user}`, {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRFToken': csrfToken,
-                        },
-                        credentials: 'same-origin',
-                        body: JSON.stringify({
-                            follow: !data.currently_following
-                        })
-                    })
-                    showProfile(user)
-                })
+                createFollowButton(profile_display, data)
             }
             document.querySelector('#profileinfo').append(profile_display);
 
@@ -128,41 +108,7 @@ function addPost(postinfo) {
     const content = document.createElement('div');
     content.innerHTML = postinfo.content;
     if (postinfo.poster === document.querySelector('#profile').dataset.user.toString()) {
-        const editDiv = createCustomElement('div', 'col-6');
-        editDiv.style.textAlign = "right";
-        const editButton = document.createElement('button');
-        editButton.innerHTML = "Edit"
-        editDiv.appendChild(editButton);
-        firstRow.appendChild(editDiv);
-        editButton.addEventListener("click", () => {
-            content.innerHTML = "";
-            const editPostForm = document.createElement('form');
-            editPostForm.id = "editpost-form";
-            const editPostBody = createCustomElement('textarea', 'form-control');
-            editPostBody.innerHTML = postinfo.content;
-            editPostForm.appendChild(editPostBody);
-            const editPostSubmit = createCustomElement('input', ['btn', 'btn-primary'])
-            editPostSubmit.type = "submit";
-            editPostForm.appendChild(editPostSubmit);
-            content.appendChild(editPostForm);
-            editPostForm.onsubmit = () => {
-                event.preventDefault()
-                editedBody = editPostBody.value;
-                var csrfToken = document.querySelector('meta[name="csrf-token"]').content;
-                fetch(`/post/${postinfo.id}`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': csrfToken,
-                    },
-                    credentials: 'same-origin',
-                    body: JSON.stringify({
-                        body: editedBody,
-                    })
-                })
-                content.replaceChildren();
-                content.innerHTML = editedBody;
-            }
-        })
+        createEditButton(firstRow, content, postinfo)
     }
     const lastRow = createCustomElement('div', 'row');
     const timestamp = createCustomElement('div', 'col-6');
@@ -232,4 +178,66 @@ function createCustomElement(tag, classes) {
         })
     }
     return element
+}
+
+function createFollowButton(profile_display, data) {
+    const followButton = document.createElement('button')
+    profile_display.appendChild(followButton)
+    if (data.currently_following) {
+        followButton.classList.add('unfollow')
+    } else {
+        followButton.innerHTML = "Follow"
+    }
+    followButton.addEventListener("click", () => {
+        var csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+        fetch(`/follow/${user}`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                follow: !data.currently_following
+            })
+        })
+        showProfile(user)
+    })
+}
+
+function createEditButton(firstRow, content, postinfo) {
+    const editDiv = createCustomElement('div', 'col-6');
+    editDiv.style.textAlign = "right";
+    const editButton = document.createElement('button');
+    editButton.innerHTML = "Edit"
+    editDiv.appendChild(editButton);
+    firstRow.appendChild(editDiv);
+    editButton.addEventListener("click", () => {
+        content.innerHTML = "";
+        const editPostForm = document.createElement('form');
+        editPostForm.id = "editpost-form";
+        const editPostBody = createCustomElement('textarea', 'form-control');
+        editPostBody.innerHTML = postinfo.content;
+        editPostForm.appendChild(editPostBody);
+        const editPostSubmit = createCustomElement('input', ['btn', 'btn-primary'])
+        editPostSubmit.type = "submit";
+        editPostForm.appendChild(editPostSubmit);
+        content.appendChild(editPostForm);
+        editPostForm.onsubmit = () => {
+            event.preventDefault()
+            editedBody = editPostBody.value;
+            var csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+            fetch(`/post/${postinfo.id}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    body: editedBody,
+                })
+            })
+            content.replaceChildren();
+            content.innerHTML = editedBody;
+        }
+    })
 }
