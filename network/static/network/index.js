@@ -3,17 +3,17 @@ let pageCounter = 1;
 
 document.addEventListener("DOMContentLoaded", function () {
     document.querySelector('#profile').addEventListener('click', () => {
-        resetPageCounter()
         let username = document.querySelector('#profile').dataset.user.toString()
-        showProfile(profile = username)
+        showView("profile", username)
+    })
+    document.querySelector('#all-posts').addEventListener('click', () => {
+        showView("allPosts")
     })
     document.querySelector('#following').addEventListener('click', () => {
-        resetPageCounter()
-        loadFollowedPosts()
+        showView("following")
     })
     document.querySelector('#home-button').addEventListener('click', () => {
-        resetPageCounter()
-        loadAllPosts()
+        showView("allPosts")
     })
     document.querySelector('#newpost-title').addEventListener('click', () => {
         document.querySelector('#newpost-form').style.display = 'block'
@@ -51,7 +51,6 @@ function loadFollowedPosts() {
             );
             paginate(data.num_pages, loadFollowedPosts)
         })
-    // history.pushState({ page: "following" }, "", "following")
 }
 
 function showProfile(user) {
@@ -77,7 +76,6 @@ function showProfile(user) {
             );
             paginate(data.num_pages, function () { showProfile(user) })
         });
-    // history.pushState({ page: "profile" }, "", "profile")
 }
 
 function loadAllPosts() {
@@ -92,8 +90,6 @@ function loadAllPosts() {
             );
             paginate(data.num_pages, loadAllPosts)
         });
-    // history.pushState({ page: "all_posts" }, "", "all_posts")
-
 };
 
 function addPost(postinfo) {
@@ -129,6 +125,24 @@ function addPost(postinfo) {
 
 function resetPageCounter() {
     pageCounter = 1;
+}
+
+function showView(view, username = "") {
+    event.preventDefault()
+    resetPageCounter()
+    if (view === "allPosts") {
+        history.pushState({ page: "all_posts" }, "", "/all_posts")
+        loadAllPosts()
+    }
+    else if (view === "following") {
+        history.pushState({ page: "following" }, "", "/following")
+        loadFollowedPosts()
+    }
+    else if (view === "profile") {
+        history.pushState({ page: `/profile/${username}` }, "", `/profile/${username}`)
+        showProfile(profile = username)
+    }
+
 }
 
 function paginate(numPages, loadFunction) {
@@ -277,6 +291,6 @@ function likeButtonContent(postinfo, likeButton) {
     }
 }
 
-// window.onpopstate = function (event) {
-//     show_view(event.state.page)
-// }
+window.onpopstate = function (event) {
+    showView(event.state.page)
+}
