@@ -51,7 +51,7 @@ function loadFollowedPosts() {
             );
             paginate(data.num_pages, loadFollowedPosts)
         })
-
+    // history.pushState({ page: "following" }, "", "following")
 }
 
 function showProfile(user) {
@@ -77,6 +77,7 @@ function showProfile(user) {
             );
             paginate(data.num_pages, function () { showProfile(user) })
         });
+    // history.pushState({ page: "profile" }, "", "profile")
 }
 
 function loadAllPosts() {
@@ -91,6 +92,7 @@ function loadAllPosts() {
             );
             paginate(data.num_pages, loadAllPosts)
         });
+    // history.pushState({ page: "all_posts" }, "", "all_posts")
 
 };
 
@@ -274,3 +276,7 @@ function likeButtonContent(postinfo, likeButton) {
         likeButton.innerHTML = `Like: ${postinfo.liked_by.length}`;
     }
 }
+
+// window.onpopstate = function (event) {
+//     show_view(event.state.page)
+// }
