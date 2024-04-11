@@ -273,10 +273,15 @@ function createLikeButton(postinfo) {
                 liked: liked,
             })
         })
-            .then(response => response.json())
-            .then(newpostinfo => {
-                likeButtonContent(newpostinfo, likeButton)
-            })
+        console.log(postinfo.liked_by)
+        if (liked) {
+            postinfo.liked_by = postinfo.liked_by.filter(username => username !== document.querySelector('#profile').dataset.user.toString())
+        } else {
+            postinfo.liked_by.push(document.querySelector('#profile').dataset.user.toString())
+        }
+        liked = !liked
+        console.log(postinfo.liked_by)
+        likeButtonContent(postinfo, likeButton)
     })
     likeButtonContent(postinfo, likeButton)
     return likeDiv
